@@ -139,10 +139,12 @@ var path = {
 gulp.task('html', function () {
   return gulp.src(path.html.src)
     .pipe(plumber())
+    .pipe(changed('./src/**/*.html'))
     .pipe(fileinclude({
       prefix: '@@',
       basepath: '@file'
     }))
+    .pipe(remember('html'))
     .pipe(gulp.dest(path.html.dest));
 });
 
@@ -150,12 +152,14 @@ gulp.task('html', function () {
 gulp.task('sass', function () {
   return gulp.src(path.sass.src)
     .pipe(plumber())
+    .pipe(changed('./src/assets/styles/**/*.{scss,sass}'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
     .pipe(sass())
     .pipe(autoprefixer(config.autoprefixer.opts))
     .pipe(prettify({
       indent_size: 2
     }))
+    .pipe(remember('sass'))
     .pipe(gulp.dest(path.sass.dest))
     .pipe(gulpIf(config.production, cssnano()))
     .pipe(gulpIf(config.production, rename("styles.min.css")))
@@ -169,10 +173,12 @@ gulp.task('sass', function () {
 gulp.task('js', function () {
   return gulp.src(path.js.src)
     .pipe(plumber())
+    .pipe(changed('./src/assets/js/**/*.js'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
     .pipe(prettify({
       indent_size: 2
     }))
+    .pipe(remember('js'))
     .pipe(gulp.dest(path.js.dest))
     .pipe(gulpIf(config.production, uglify()))
     .pipe(gulpIf(config.production, rename("main.min.js")))
