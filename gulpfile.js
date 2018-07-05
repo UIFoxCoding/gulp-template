@@ -3,7 +3,7 @@
 // ---------- Using Gulp4
 var gulp = require('gulp');
 var browserSync = require('browser-sync').create();
-var del = require('del');
+var rimraf = require('rimraf');
 var autoprefixer = require('gulp-autoprefixer');
 var cache = require('gulp-cache');
 var concat = require('gulp-concat');
@@ -26,17 +26,17 @@ var fileinclude = require('gulp-file-include');
 // ---------- Config
 var config = {
 
-  production: true,
+  production: false,
 
   autoprefixer: {
-    opt: {
+    opts: {
       browsers: ['last 5 versions'],
       cascade: false
     }
   },
 
   browsersync: {
-    opt: {
+    opts: {
       server: {
         baseDir: './dist/'
       },
@@ -46,7 +46,7 @@ var config = {
   },
 
   favicons: {
-    opt: {
+    opts: {
       icons: {
         appleIcon: true,
         favicons: true,
@@ -152,7 +152,7 @@ gulp.task('sass', function () {
     .pipe(plumber())
     .pipe(gulpIf(config.production, sourcemaps.init()))
     .pipe(sass())
-    .pipe(autoprefixer(config.autoprefixer.opt))
+    .pipe(autoprefixer(config.autoprefixer.opts))
     .pipe(prettify({
       indent_size: 2
     }))
@@ -186,6 +186,106 @@ gulp.task('js', function () {
 gulp.task('images', function () {
   return gulp.src(path.img.src)
     .pipe(plumber())
-    .pipe(cache(imagemin()))
+    .pipe(gulpIf(config.production,
+      cache(imagemin([
+        imagemin.gifsicle({
+          interlaced: true
+        }),
+        imagemin.jpegtran({
+          progressive: true
+        }),
+        imageminJpegRecompress({
+          loops: 5,
+          min: 65,
+          max: 70,
+          quality: 'medium'
+        }),
+        imagemin.svgo(),
+        imagemin.optipng({
+          optimizationLevel: 3
+        }),
+        imageminPngquant({
+          quality: '65-70',
+          speed: 5
+        })
+      ], {
+        verbose: true
+      }))
+    ))
     .pipe(gulp.dest(path.img.dest));
 });
+
+// ---------- Task FONTS
+gulp.task('fonts', function () {
+  return gulp.src(path.font.src)
+    .pipe(plumber())
+    .pipe(gulp.dest(path.font.dest));
+});
+
+// ---------- Task FAVICONS
+gulp.task('favicons', function () {
+  return gulp.src(path.favicons.src)
+    .pipe(favicons(config.favicons.opts))
+    .pipe(gulp.dest(path.favicons.dest));
+});
+
+// ---------- Task APP
+gulp.task('app', gulp.parallel('html', 'js', 'images', 'sass', 'fonts', 'favicons'));
+
+// ---------- Task CLEAN
+gulp.task('clean:cache', function (done) {
+  return cache.clearAll(done);
+});
+
+gulp.task('clean:dist', function (cb) {
+  rimraf('./folder', cb);
+});
+// gulp.task('clean:dist', (done) => {
+//   del(path.clean);
+//   done();
+// });
+
+gulp.task('clean', gulp.parallel('clean:cache', 'clean:dist'));
+
+// ---------- Task VENDORS
+gulp.task('vendor:js', function () {
+  return gulp.src(path.vendor.js.src)
+    .pipe(plumber())
+    .pipe(gulp.dest(path.vendor.js.dest));
+});
+
+gulp.task('vendor:css', function () {
+  return gulp.src(path.vendor.css.src)
+    .pipe(plumber())
+    .pipe(gulp.dest(path.vendor.css.dest));
+});
+
+gulp.task('vendor:fonts', function () {
+  return gulp.src(path.vendor.fonts.src)
+    .pipe(plumber())
+    .pipe(gulp.dest(path.vendor.fonts.dest));
+});
+
+gulp.task('vendor', gulp.parallel('vendor:js', 'vendor:css', 'vendor:fonts'));
+
+// ---------- Task WATCH
+gulp.task('watch', function () {
+  gulp.watch('./src/**/*.html', gulp.series('html'));
+  gulp.watch(path.sass.src, gulp.series('sass'));
+  gulp.watch(path.js.src, gulp.series('js'));
+  gulp.watch(path.img.src, gulp.series('images'));
+  gulp.watch(path.font.src, gulp.series('fonts'));
+  gulp.watch(path.favicons.src, gulp.series('favicons'));
+});
+
+// ---------- Task SYNC
+gulp.task('sync', function () {
+  browserSync.init(config.browsersync.opts);
+  browserSync.watch('./dist/**/*').on('change', browserSync.reload);
+});
+
+// ---------- Task BUILD
+gulp.task('build', gulp.series('clean', gulp.parallel('app', 'vendor')));
+
+// ---------- Task DEFAULT
+gulp.task('default', gulp.series('build', gulp.parallel('sync', 'watch')));
