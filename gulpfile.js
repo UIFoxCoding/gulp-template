@@ -3,10 +3,8 @@
 // ---------- Using Gulp4
 var gulp = require('gulp');
 var browserSync = require('browser-sync').create();
-var rimraf = require('rimraf');
 var autoprefixer = require('gulp-autoprefixer');
 var cache = require('gulp-cache');
-var concat = require('gulp-concat');
 var cssnano = require('gulp-cssnano');
 var favicons = require('gulp-favicons');
 var gulpIf = require('gulp-if');
@@ -28,7 +26,7 @@ var del = require('del');
 // ---------- Config
 var config = {
 
-  production: false,
+  production: true,
 
   autoprefixer: {
     opts: {
@@ -274,15 +272,8 @@ gulp.task('vendor', gulp.parallel('vendor:js', 'vendor:css', 'vendor:fonts'));
 
 // ---------- Task WATCH
 gulp.task('watch', function () {
-  // gulp.watch('./src/**/*.html', gulp.series('html').on('unlink', function (filepath) {
-  //   remember.forget('html', paths.resolve(filepath));
-  // }));
-  gulp.watch('./src/**/*.html', gulp.series('html')).on('unlink', function (filepath) {
-    remember.forget('html', path.resolve(filepath));
-  });
-  gulp.watch(paths.sass.src, gulp.series('sass')).on('unlink', function (filepath) {
-    remember.forget('sass', path.resolve(filepath));
-  });
+  gulp.watch('./src/**/*.html', gulp.series('html'));
+  gulp.watch(paths.sass.src, gulp.series('sass'));
   gulp.watch(paths.js.src, gulp.series('js'));
   gulp.watch(paths.img.src, gulp.series('images'));
   gulp.watch(paths.font.src, gulp.series('fonts'));
