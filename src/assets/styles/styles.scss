@@ -1,9 +1,10 @@
 /* test */
-
+@import 'test2';
 .flex-item {
   display: flex;
   align-items: center;
   flex-direction: row;
   flex-basis: 50%;
   opacity: 0.8;
+  height: 200px;
 }

@@ -22,6 +22,8 @@ var uglify = require('gulp-uglify');
 var changed = require('gulp-changed');
 var remember = require('gulp-remember');
 var fileinclude = require('gulp-file-include');
+var path = require('path');
+var del = require('del');
 
 // ---------- Config
 var config = {
@@ -64,7 +66,7 @@ var config = {
 };
 
 // ---------- Paths
-var path = {
+var paths = {
 
   clean: './dist/',
 
@@ -137,7 +139,7 @@ var path = {
 
 // ---------- Task HTML
 gulp.task('html', function () {
-  return gulp.src(path.html.src)
+  return gulp.src(paths.html.src)
     .pipe(plumber())
     .pipe(changed('./src/**/*.html'))
     .pipe(fileinclude({
@@ -145,12 +147,12 @@ gulp.task('html', function () {
       basepath: '@file'
     }))
     .pipe(remember('html'))
-    .pipe(gulp.dest(path.html.dest));
+    .pipe(gulp.dest(paths.html.dest));
 });
 
 // ---------- Task SASS
 gulp.task('sass', function () {
-  return gulp.src(path.sass.src)
+  return gulp.src(paths.sass.src)
     .pipe(plumber())
     .pipe(changed('./src/assets/styles/**/*.{scss,sass}'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
@@ -160,18 +162,18 @@ gulp.task('sass', function () {
       indent_size: 2
     }))
     .pipe(remember('sass'))
-    .pipe(gulp.dest(path.sass.dest))
+    .pipe(gulp.dest(paths.sass.dest))
     .pipe(gulpIf(config.production, cssnano()))
     .pipe(gulpIf(config.production, rename("styles.min.css")))
     .pipe(gulpIf(config.production, sourcemaps.write('.', {
       sourceRoot: '/'
     })))
-    .pipe(gulpIf(config.production, gulp.dest(path.sass.dest)));
+    .pipe(gulpIf(config.production, gulp.dest(paths.sass.dest)));
 });
 
 // ---------- Task JS
 gulp.task('js', function () {
-  return gulp.src(path.js.src)
+  return gulp.src(paths.js.src)
     .pipe(plumber())
     .pipe(changed('./src/assets/js/**/*.js'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
@@ -179,18 +181,18 @@ gulp.task('js', function () {
       indent_size: 2
     }))
     .pipe(remember('js'))
-    .pipe(gulp.dest(path.js.dest))
+    .pipe(gulp.dest(paths.js.dest))
     .pipe(gulpIf(config.production, uglify()))
     .pipe(gulpIf(config.production, rename("main.min.js")))
     .pipe(gulpIf(config.production, sourcemaps.write('.', {
       sourceRoot: '/'
     })))
-    .pipe(gulpIf(config.production, gulp.dest(path.js.dest)));
+    .pipe(gulpIf(config.production, gulp.dest(paths.js.dest)));
 });
 
 // ---------- Task IMAGES
 gulp.task('images', function () {
-  return gulp.src(path.img.src)
+  return gulp.src(paths.img.src)
     .pipe(plumber())
     .pipe(gulpIf(config.production,
       cache(imagemin([
@@ -218,21 +220,21 @@ gulp.task('images', function () {
         verbose: true
       }))
     ))
-    .pipe(gulp.dest(path.img.dest));
+    .pipe(gulp.dest(paths.img.dest));
 });
 
 // ---------- Task FONTS
 gulp.task('fonts', function () {
-  return gulp.src(path.font.src)
+  return gulp.src(paths.font.src)
     .pipe(plumber())
-    .pipe(gulp.dest(path.font.dest));
+    .pipe(gulp.dest(paths.font.dest));
 });
 
 // ---------- Task FAVICONS
 gulp.task('favicons', function () {
-  return gulp.src(path.favicons.src)
+  return gulp.src(paths.favicons.src)
     .pipe(favicons(config.favicons.opts))
-    .pipe(gulp.dest(path.favicons.dest));
+    .pipe(gulp.dest(paths.favicons.dest));
 });
 
 // ---------- Task APP
@@ -243,45 +245,48 @@ gulp.task('clean:cache', function (done) {
   return cache.clearAll(done);
 });
 
-gulp.task('clean:dist', function (cb) {
-  rimraf('./folder', cb);
+gulp.task('clean:dist', function () {
+  return del(paths.clean);
 });
-// gulp.task('clean:dist', (done) => {
-//   del(path.clean);
-//   done();
-// });
 
 gulp.task('clean', gulp.parallel('clean:cache', 'clean:dist'));
 
 // ---------- Task VENDORS
 gulp.task('vendor:js', function () {
-  return gulp.src(path.vendor.js.src)
+  return gulp.src(paths.vendor.js.src)
     .pipe(plumber())
-    .pipe(gulp.dest(path.vendor.js.dest));
+    .pipe(gulp.dest(paths.vendor.js.dest));
 });
 
 gulp.task('vendor:css', function () {
-  return gulp.src(path.vendor.css.src)
+  return gulp.src(paths.vendor.css.src)
     .pipe(plumber())
-    .pipe(gulp.dest(path.vendor.css.dest));
+    .pipe(gulp.dest(paths.vendor.css.dest));
 });
 
 gulp.task('vendor:fonts', function () {
-  return gulp.src(path.vendor.fonts.src)
+  return gulp.src(paths.vendor.fonts.src)
     .pipe(plumber())
-    .pipe(gulp.dest(path.vendor.fonts.dest));
+    .pipe(gulp.dest(paths.vendor.fonts.dest));
 });
 
 gulp.task('vendor', gulp.parallel('vendor:js', 'vendor:css', 'vendor:fonts'));
 
 // ---------- Task WATCH
 gulp.task('watch', function () {
-  gulp.watch('./src/**/*.html', gulp.series('html'));
-  gulp.watch(path.sass.src, gulp.series('sass'));
-  gulp.watch(path.js.src, gulp.series('js'));
-  gulp.watch(path.img.src, gulp.series('images'));
-  gulp.watch(path.font.src, gulp.series('fonts'));
-  gulp.watch(path.favicons.src, gulp.series('favicons'));
+  // gulp.watch('./src/**/*.html', gulp.series('html').on('unlink', function (filepath) {
+  //   remember.forget('html', paths.resolve(filepath));
+  // }));
+  gulp.watch('./src/**/*.html', gulp.series('html')).on('unlink', function (filepath) {
+    remember.forget('html', path.resolve(filepath));
+  });
+  gulp.watch(paths.sass.src, gulp.series('sass')).on('unlink', function (filepath) {
+    remember.forget('sass', path.resolve(filepath));
+  });
+  gulp.watch(paths.js.src, gulp.series('js'));
+  gulp.watch(paths.img.src, gulp.series('images'));
+  gulp.watch(paths.font.src, gulp.series('fonts'));
+  gulp.watch(paths.favicons.src, gulp.series('favicons'));
 });
 
 // ---------- Task SYNC
