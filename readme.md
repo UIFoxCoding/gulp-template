@@ -9,6 +9,6 @@ Copy files to your project folder, install node_modules, run task:
 
 ```sh
 $ cd project_folder
-$ yarn
+$ npm i
 $ gulp
 ```
