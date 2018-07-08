@@ -20,8 +20,8 @@ var uglify = require('gulp-uglify');
 var changed = require('gulp-changed');
 var remember = require('gulp-remember');
 var fileinclude = require('gulp-file-include');
-var path = require('path');
 var del = require('del');
+var notify = require("gulp-notify");
 
 // ---------- Config
 var config = {
@@ -138,7 +138,12 @@ var paths = {
 // ---------- Task HTML
 gulp.task('html', function () {
   return gulp.src(paths.html.src)
-    .pipe(plumber())
+    .pipe(plumber({
+      errorHandler: notify.onError({
+        message: "Error: <%= error.message %>",
+        title: "HTML"
+      })
+    }))
     .pipe(changed('./src/**/*.html'))
     .pipe(fileinclude({
       prefix: '@@',
@@ -151,7 +156,12 @@ gulp.task('html', function () {
 // ---------- Task SASS
 gulp.task('sass', function () {
   return gulp.src(paths.sass.src)
-    .pipe(plumber())
+    .pipe(plumber({
+      errorHandler: notify.onError({
+        message: "Error: <%= error.message %>",
+        title: "SASS"
+      })
+    }))
     .pipe(changed('./src/assets/styles/**/*.{scss,sass}'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
     .pipe(sass())
@@ -172,7 +182,12 @@ gulp.task('sass', function () {
 // ---------- Task JS
 gulp.task('js', function () {
   return gulp.src(paths.js.src)
-    .pipe(plumber())
+    .pipe(plumber({
+      errorHandler: notify.onError({
+        message: "Error: <%= error.message %>",
+        title: "JS"
+      })
+    }))
     .pipe(changed('./src/assets/js/**/*.js'))
     .pipe(gulpIf(config.production, sourcemaps.init()))
     .pipe(prettify({
@@ -191,7 +206,6 @@ gulp.task('js', function () {
 // ---------- Task IMAGES
 gulp.task('images', function () {
   return gulp.src(paths.img.src)
-    .pipe(plumber())
     .pipe(gulpIf(config.production,
       cache(imagemin([
         imagemin.gifsicle({
@@ -224,7 +238,6 @@ gulp.task('images', function () {
 // ---------- Task FONTS
 gulp.task('fonts', function () {
   return gulp.src(paths.font.src)
-    .pipe(plumber())
     .pipe(gulp.dest(paths.font.dest));
 });
 
@@ -252,19 +265,28 @@ gulp.task('clean', gulp.parallel('clean:cache', 'clean:dist'));
 // ---------- Task VENDORS
 gulp.task('vendor:js', function () {
   return gulp.src(paths.vendor.js.src)
-    .pipe(plumber())
+    .pipe(plumber({
+      errorHandler: notify.onError({
+        message: "Error: <%= error.message %>",
+        title: "Vendor:JS"
+      })
+    }))
     .pipe(gulp.dest(paths.vendor.js.dest));
 });
 
 gulp.task('vendor:css', function () {
   return gulp.src(paths.vendor.css.src)
-    .pipe(plumber())
+    .pipe(plumber({
+      errorHandler: notify.onError({
+        message: "Error: <%= error.message %>",
+        title: "Vendor:CSS"
+      })
+    }))
     .pipe(gulp.dest(paths.vendor.css.dest));
 });
 
 gulp.task('vendor:fonts', function () {
   return gulp.src(paths.vendor.fonts.src)
-    .pipe(plumber())
     .pipe(gulp.dest(paths.vendor.fonts.dest));
 });
 
