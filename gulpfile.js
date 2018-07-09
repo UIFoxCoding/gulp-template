@@ -26,7 +26,7 @@ var notify = require("gulp-notify");
 // ---------- Config
 var config = {
 
-  production: true,
+  production: false,
 
   autoprefixer: {
     opts: {
